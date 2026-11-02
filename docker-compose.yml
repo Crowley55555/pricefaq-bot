@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  # ─── FastAPI бэкенд ────────────────────────────────────────────────────
+  backend:
+    build: .
+    container_name: pricefaq-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+
+  # ─── Telegram-бот (отдельный процесс) ──────────────────────────────────
+  telegram-bot:
+    build: .
+    container_name: pricefaq-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+    command: python telegram_bot.py
+    depends_on:
+      - backend
